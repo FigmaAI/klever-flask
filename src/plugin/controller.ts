@@ -2,7 +2,7 @@ figma.showUI(__html__, { width: 400, height: 400 });
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'request-data') {
-    const serverUrl = 'http://localhost:8888/hello/world'; 
+    const serverUrl = `http://127.0.0.1:5000/${msg.api}`; 
     try {
       const response = await fetch(serverUrl);
       // Check if the response is ok before trying to parse it as JSON

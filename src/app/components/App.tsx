@@ -2,9 +2,14 @@ import * as React from 'react';
 
 const App = () => {
   const [data, setData] = React.useState(null);
+  const [api, setApi] = React.useState('hello2');
 
   const requestData = () => {
-    parent.postMessage({ pluginMessage: { type: 'request-data' } }, '*');
+    parent.postMessage({ pluginMessage: { type: 'request-data', api } }, '*');
+  };
+
+  const handleApiChange = (event) => {
+    setApi(event.target.value);
   };
 
   React.useEffect(() => {
@@ -24,6 +29,10 @@ const App = () => {
 
   return (
     <div>
+      <select value={api} onChange={handleApiChange}>
+        <option value="hello2">hello2</option>
+        <option value="hello/world">hello/world</option>
+      </select>
       <button onClick={requestData}>Request Data</button>
       {data && <div>Data: {JSON.stringify(data)}</div>}
     </div>
