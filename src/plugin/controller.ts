@@ -1,26 +1,19 @@
-figma.showUI(__html__);
+figma.showUI(__html__, { width: 400, height: 400 });
 
-figma.ui.onmessage = (msg) => {
-  if (msg.type === 'create-rectangles') {
-    const nodes = [];
-
-    for (let i = 0; i < msg.count; i++) {
-      const rect = figma.createRectangle();
-      rect.x = i * 150;
-      rect.fills = [{ type: 'SOLID', color: { r: 1, g: 0.5, b: 0 } }];
-      figma.currentPage.appendChild(rect);
-      nodes.push(rect);
+figma.ui.onmessage = async (msg) => {
+  if (msg.type === 'request-data') {
+    const serverUrl = 'http://localhost:8888/hello/world'; 
+    try {
+      const response = await fetch(serverUrl);
+      // Check if the response is ok before trying to parse it as JSON
+      if (response.ok) {
+        const data = await response.json();
+        figma.ui.postMessage({ type: 'response-data', data });
+      } else {
+        console.error('Server response was not ok');
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
-
-    figma.currentPage.selection = nodes;
-    figma.viewport.scrollAndZoomIntoView(nodes);
-
-    // This is how figma responds back to the ui
-    figma.ui.postMessage({
-      type: 'create-rectangles',
-      message: `Created ${msg.count} Rectangles`,
-    });
   }
-
-  figma.closePlugin();
 };

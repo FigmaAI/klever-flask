@@ -1,47 +1,33 @@
-import React from 'react';
-import logo from '../assets/logo.svg';
-import '../styles/ui.css';
+import * as React from 'react';
 
-function App() {
-  const textbox = React.useRef<HTMLInputElement>(undefined);
+const App = () => {
+  const [data, setData] = React.useState(null);
 
-  const countRef = React.useCallback((element: HTMLInputElement) => {
-    if (element) element.value = '5';
-    textbox.current = element;
-  }, []);
-
-  const onCreate = () => {
-    const count = parseInt(textbox.current.value, 10);
-    parent.postMessage({ pluginMessage: { type: 'create-rectangles', count } }, '*');
-  };
-
-  const onCancel = () => {
-    parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+  const requestData = () => {
+    parent.postMessage({ pluginMessage: { type: 'request-data' } }, '*');
   };
 
   React.useEffect(() => {
-    // This is how we read messages sent from the plugin controller
-    window.onmessage = (event) => {
-      const { type, message } = event.data.pluginMessage;
-      if (type === 'create-rectangles') {
-        console.log(`Figma Says: ${message}`);
+    function handleMessage(event) {
+      if (event.data.pluginMessage.type === 'response-data') {
+        setData(event.data.pluginMessage.data);
       }
+    }
+
+    window.addEventListener('message', handleMessage);
+
+    // Clean up event listener on unmount
+    return () => {
+      window.removeEventListener('message', handleMessage);
     };
   }, []);
 
   return (
     <div>
-      <img src={logo} />
-      <h2>Rectangle Creator</h2>
-      <p>
-        Count: <input ref={countRef} />
-      </p>
-      <button id="create" onClick={onCreate}>
-        Create
-      </button>
-      <button onClick={onCancel}>Cancel</button>
+      <button onClick={requestData}>Request Data</button>
+      {data && <div>Data: {JSON.stringify(data)}</div>}
     </div>
   );
-}
+};
 
 export default App;
