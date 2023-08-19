@@ -8,6 +8,10 @@ const App = () => {
     parent.postMessage({ pluginMessage: { type: 'request-data', api } }, '*');
   };
 
+  const postDocumentData = () => {
+    parent.postMessage({ pluginMessage: { type: 'post-document-data' } }, '*');
+  };
+
   const handleApiChange = (event) => {
     setApi(event.target.value);
   };
@@ -34,6 +38,7 @@ const App = () => {
         <option value="hello/world">hello/world</option>
       </select>
       <button onClick={requestData}>Request Data</button>
+      <button onClick={postDocumentData}>Post Library Data</button>
       {data && <div>Data: {JSON.stringify(data)}</div>}
     </div>
   );
