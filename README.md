@@ -39,16 +39,12 @@ pip install flask jupyter
 
 - **POST API 시나리오**
     1. Jupyter Notebook에서 Flask 서버를 시작합니다.
-    2. Figma 플러그인에 데이터를 전송하라는 요청을 보냅니다.
+    2. Figma 플러그인에서 Jupyter로 데이터를 전송하라는 요청을 보냅니다.
     3. Figma 플러그인은 데이터를 Jupyter Notebook으로 전송합니다.
     4. Jupyter Notebook은 전송받은 데이터를 저장하고 Flask 서버를 중지합니다.
-    5. Jupyter Notebook에서 계산 작업을 수행합니다.
-
 - **GET API 시나리오**
     1. Jupyter Notebook에서 Flask 서버를 시작합니다.
-    2. Figma 플러그인에 데이터가 준비되었음을 알립니다.
     3. Figma 플러그인은 서버에 요청을 보냅니다.
     4. Jupyter Notebook은 요청을 처리하고 데이터를 Figma 플러그인으로 반환합니다.
     5. Jupyter Notebook은 200 OK를 반환하고 Flask 서버를 중지합니다.
 
-![PlantUML](https://cdn-0.plantuml.com/plantuml/png/dLF1QiCm3BtxAqJlAsN7GKPtMCSsMCEo7z1ijNXDxCoM0_dxELvZCAJGxP88yVJqtbEozOoEGzUAzNej-bXhgNiq3AkNq8zC3juiqwUrfnMWXw_VPedSwME7KBVXg4r27QQ645K5zRxvW8Vw6Hf91fssK5L2d5dWvXxcyWwQIGdiMlGdyEI6s3nObna4IjO3CiqZ1KtQ64dUwJkGPs0BlOrlXOnvygmhFSlTTSOgAj6NnE90QGEfD7V9akqBHoBpB_ee996BzZkGsChG8cjhV8hqwV7_YLuNOhouFep95pX2DOeh8cp8A70v_ddXiZTd9Na_mvSFoS6PFzmaZznkDh1_1JHg8V-5-ASFVnl5Jp_13m00)
