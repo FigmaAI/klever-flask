@@ -2,23 +2,39 @@ import * as React from 'react';
 
 const App = () => {
   const [data, setData] = React.useState(null);
-  const [api, setApi] = React.useState('hello2');
 
-  const requestData = () => {
-    parent.postMessage({ pluginMessage: { type: 'request-data', api } }, '*');
+  const getData = () => {
+    setData(null);
+    parent.postMessage({ pluginMessage: { type: 'get-data' } }, '*');
   };
 
-  const postDocumentData = () => {
-    parent.postMessage({ pluginMessage: { type: 'post-document-data' } }, '*');
+  const postData = () => {
+    setData(null);
+    parent.postMessage({ pluginMessage: { type: 'post-data' } }, '*');
   };
 
-  const handleApiChange = (event) => {
-    setApi(event.target.value);
+  const requestRico = () => {
+    setData(null);
+    parent.postMessage({ pluginMessage: { type: 'request-rico' } }, '*');
+  };
+
+  const generateMappingTable = () => {
+    setData(null);
+    parent.postMessage({ pluginMessage: { type: 'generate-mapping-table' } }, '*');
   };
 
   React.useEffect(() => {
     function handleMessage(event) {
       if (event.data.pluginMessage.type === 'response-data') {
+        setData(event.data.pluginMessage.data);
+      }
+      if (event.data.pluginMessage.type === 'response-post') {
+        setData(event.data.pluginMessage.data);
+      }
+      if (event.data.pluginMessage.type === 'response-rico') {
+        setData(event.data.pluginMessage.data);
+      }
+      if (event.data.pluginMessage.type === 'response-mapping') {
         setData(event.data.pluginMessage.data);
       }
     }
@@ -32,13 +48,19 @@ const App = () => {
   }, []);
 
   return (
-    <div>
-      <select value={api} onChange={handleApiChange}>
-        <option value="hello2">hello2</option>
-        <option value="hello/world">hello/world</option>
-      </select>
-      <button onClick={requestData}>Request Data</button>
-      <button onClick={postDocumentData}>Post Library Data</button>
+    <div style={{ padding: '20px' }}>
+      <div style={{ marginBottom: '20px' }}>
+        <button onClick={getData}>Test if API is working (GET)</button>
+      </div>
+      <div style={{ marginBottom: '20px' }}>
+        <button onClick={postData}>Extract design library information (POST)</button>
+      </div>
+      <div style={{ marginBottom: '20px' }}>
+        <button onClick={requestRico}>Extract annotation information from RICO (POST)</button>
+      </div>
+      <div style={{ marginBottom: '20px' }}>
+        <button onClick={generateMappingTable}>Generate mapping table (POST)</button>
+      </div>
       {data && <div>Data: {JSON.stringify(data)}</div>}
     </div>
   );
