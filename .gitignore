@@ -4,4 +4,4 @@ src/server/datasets
 settings.json
 yarn-error.log
 .vscode
-openai_key.json
+src/server/key.json
