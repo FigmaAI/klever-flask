@@ -4,4 +4,4 @@ src/server/datasets
 settings.json
 yarn-error.log
 .vscode
-src/server/key.json
+key.json
