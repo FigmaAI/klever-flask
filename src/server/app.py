@@ -9,10 +9,10 @@ import json
 from download_and_process_dataset import process_dataset
 from chatgpt_model import generate_response  # Import the generate_response function
 
-
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})  # Allow CORS for all routes and origins
+CORS(app)
 
+dir_path = os.path.dirname(os.path.realpath(__file__))  # Get the directory of app.py
 
 @app.route('/')
 def hello_world():
@@ -27,7 +27,8 @@ def post_data():
     data = request.get_json()  # Get the JSON body of the request
 
     # Save the data as a JSON file
-    with open('data.json', 'w') as f:
+    data_path = os.path.join(dir_path, 'data.json')  # Get the absolute path of data.json
+    with open(data_path, 'w') as f:
         json.dump(data, f)
 
     return {"status": 200, "message": "Data received and printed"}, 200
@@ -40,10 +41,11 @@ def update_rico():
         return jsonify(error='The semantic_annotations folder does not exist. Please download the RICO dataset', link='http://www.interactionmining.org/rico.html'), 404
 
     # Run the script
-    subprocess.run(['python', './scripts/download_and_process_dataset.py'])
+    subprocess.run(['python', 'download_and_process_dataset.py'])
 
     # Save the labels as a JSON file
-    with open('labels.json', 'w') as f:
+    labels_path = os.path.join(dir_path, 'labels.json')  # Get the absolute path of labels.json
+    with open(labels_path, 'w') as f:
         json.dump(labels, f)
 
     return jsonify(status=200, message="Script executed and labels.json file created"), 200
@@ -51,13 +53,15 @@ def update_rico():
 @app.route('/api/generateMappingTable', methods=['POST'])
 def generate_mapping_table():
     # Check if 'data.json' and 'labels.json' exist
-    if not os.path.exists('data.json') or not os.path.exists('labels.json'):
+    data_path = os.path.join(dir_path, 'data.json')  # Get the absolute path of data.json
+    labels_path = os.path.join(dir_path, 'labels.json')  # Get the absolute path of labels.json
+    if not os.path.exists(data_path) or not os.path.exists(labels_path):
         return jsonify(error='data.json or labels.json does not exist'), 404
 
     # Load 'data' and 'labels' from the JSON files
-    with open('data.json', 'r') as f:
+    with open(data_path, 'r') as f:
         data = json.load(f)
-    with open('labels.json', 'r') as f:
+    with open(labels_path, 'r') as f:
         labels = json.load(f)
 
     # Convert 'data' and 'labels' to strings
@@ -65,16 +69,21 @@ def generate_mapping_table():
     labels_str = json.dumps(labels)
 
     # Generate the system and user prompts
-    system = "Please check the list of labels and assign a similar componentLabel from RICO for each item in the data."
-    user = f"The data is as follows: {data_str}\nThe labels are as follows: {labels_str}"
+    system = "I have a list of UI components and a list of labels from the RICO dataset. " \
+             "For each component in the list, I need to find the most similar label from the RICO dataset and assign it to the component."
+    user = f"The list of UI components is: {data_str}\nThe list of labels from the RICO dataset is: {labels_str}"
 
-    # Compare the 'data' and 'labels' and generate a mapping table
-    result = generate_response(system, user)
+    try:
+        # Compare the 'data' and 'labels' and generate a mapping table
+        result = generate_response(system, user)
+        print(f"Result: {result}")  # Log the result
 
-    # Convert the result back to a dictionary
-    mapping_table = json.loads(result)
+        # Convert the result back to a dictionary
+        mapping_table = json.loads(result)
 
-    return jsonify(mapping_table)
+        return jsonify(mapping_table)
+    except Exception as e:
+        return jsonify(error=str(e)), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
