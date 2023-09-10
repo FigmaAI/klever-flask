@@ -128,6 +128,38 @@ figma.ui.onmessage = async (msg) => {
       console.error('Error:', error);
       figma.notify(`Error: ${error.message}`);
     }
+  } else if (msg.type === 'request-figma-file') {
+    let index = 0;
+    const serverUrl = 'http://127.0.0.1:5000/api/getFigmaFile';
+
+    while (true) {
+      try {
+        const response = await fetch(serverUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ index: index }), // Send the index
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          // If the server has no more files, break the loop
+          if (data.end) {
+            break;
+          }
+
+          figma.ui.postMessage({ type: 'response-figma-file', data: data.data });
+        } else {
+          console.error('Server response was not ok');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+
+      index++;
+    }
   }
 };
 

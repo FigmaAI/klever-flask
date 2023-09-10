@@ -23,6 +23,12 @@ const App = () => {
     parent.postMessage({ pluginMessage: { type: 'generate-mapping-table' } }, '*');
   };
 
+  const requestFigmaFile = () => {
+    setData(null);
+    parent.postMessage({ pluginMessage: { type: 'request-figma-file' } }, '*');
+  };
+
+
   React.useEffect(() => {
     function handleMessage(event) {
       if (event.data.pluginMessage.type === 'response-data') {
@@ -35,6 +41,9 @@ const App = () => {
         setData(event.data.pluginMessage.data);
       }
       if (event.data.pluginMessage.type === 'response-mapping') {
+        setData(event.data.pluginMessage.data);
+      }
+      if (event.data.pluginMessage.type === 'response-figma-file') {
         setData(event.data.pluginMessage.data);
       }
     }
@@ -60,6 +69,9 @@ const App = () => {
       </div>
       <div style={{ marginBottom: '20px' }}>
         <button onClick={generateMappingTable}>Generate mapping table (POST)</button>
+      </div>
+      <div style={{ marginBottom: '20px' }}>
+        <button onClick={requestFigmaFile}>Request Figma File</button>
       </div>
       {data && <div>Data: {JSON.stringify(data)}</div>}
     </div>
