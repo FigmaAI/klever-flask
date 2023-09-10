@@ -3,14 +3,15 @@ import os
 sys.path.insert(0, os.path.abspath('./scripts'))
 
 import subprocess
-from flask import Flask, request, jsonify
-from flask_cors import CORS, cross_origin
+import random
 import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS  # Import the CORS module
 from download_and_process_dataset import process_dataset
-from chatgpt_model import generate_response  # Import the generate_response function
+from chatgpt_model import generate_response, inform_design_system
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for the Flask application
 
 dir_path = os.path.dirname(os.path.realpath(__file__))  # Get the directory of app.py
 
@@ -52,38 +53,43 @@ def update_rico():
 
 @app.route('/api/generateMappingTable', methods=['POST'])
 def generate_mapping_table():
-    # Check if 'data.json' and 'labels.json' exist
-    data_path = os.path.join(dir_path, 'data.json')  # Get the absolute path of data.json
-    labels_path = os.path.join(dir_path, 'labels.json')  # Get the absolute path of labels.json
-    if not os.path.exists(data_path) or not os.path.exists(labels_path):
-        return jsonify(error='data.json or labels.json does not exist'), 404
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(dir_path, 'data.json')
+    
+    if not os.path.exists(data_path):
+        return jsonify(error='data.json does not exist'), 404
 
-    # Load 'data' and 'labels' from the JSON files
     with open(data_path, 'r') as f:
         data = json.load(f)
-    with open(labels_path, 'r') as f:
-        labels = json.load(f)
 
-    # Convert 'data' and 'labels' to strings
-    data_str = json.dumps(data)
-    labels_str = json.dumps(labels)
+    data_extracted = [node for node in data["nodes"]]
+    inform_design_system(data_extracted)
 
-    # Generate the system and user prompts
-    system = "I have a list of UI components and a list of labels from the RICO dataset. " \
-             "For each component in the list, I need to find the most similar label from the RICO dataset and assign it to the component."
-    user = f"The list of UI components is: {data_str}\nThe list of labels from the RICO dataset is: {labels_str}"
+    directory = './datasets'
+    all_files = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.json'):
+                file_path = os.path.join(root, file)
+                all_files.append(file_path)
 
-    try:
-        # Compare the 'data' and 'labels' and generate a mapping table
-        result = generate_response(system, user)
-        print(f"Result: {result}")  # Log the result
+    selected_files = random.sample(all_files, 5)
 
-        # Convert the result back to a dictionary
-        mapping_table = json.loads(result)
+    for file_path in selected_files:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            for object in data:
+                object_str = json.dumps(object)
+                result = generate_response(object_str)
+                print(f"Result: {result}")
+                matched_item = json.loads(result)
+                object.update(matched_item)
 
-        return jsonify(mapping_table)
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+        with open(file_path, 'w') as f:
+            json.dump(data, f)
+
+    return jsonify(status=200, message="All objects in the selected RICO dataset files have been processed and updated"), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)

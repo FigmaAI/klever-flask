@@ -42,15 +42,56 @@ python app.py
 
 Figma 플러그인과 Flask 서버는 아래와 같이 정보를 주고 받습니다. 
 
-- **POST API 시나리오**
-    1. Flask 서버를 시작합니다.
-    2. Figma 플러그인에서 서버로 데이터를 전송하라는 요청을 보냅니다.
-    3. Figma 플러그인은 데이터를 서버로 전송합니다.
-    4. 서버는 전송받은 데이터를 처리합니다.
-- **GET API 시나리오**
-    1. Flask 서버를 시작합니다.
-    3. Figma 플러그인은 서버에 요청을 보냅니다.
-    4. 서버는 요청을 처리하고 데이터를 Figma 플러그인으로 반환합니다.
-    5. 서버는 200 OK를 반환합니다.
+![uml](./uml.png)
+```
+sequenceDiagram
+    participant Plugin as Figma Plugin
+    participant Server as Flask Server
+    participant Figma as Figma Plugin API
+    participant GPT as OpenAI
 
----
+    Note over Plugin,Server: /api/get
+    Plugin ->> Server: GET request
+    activate Server
+    Server -->> Plugin: Return static message
+    deactivate Server
+
+    Note over Plugin,Server: /api/post
+    Plugin ->> Figma: Request design system info
+    activate Figma
+    Figma -->> Plugin: Return design system info
+    deactivate Figma
+    Plugin ->> Server: POST design system info
+    activate Server
+    Server ->> Server: save/update data
+    Server -->> Plugin: Return response message
+    deactivate Server
+
+
+
+    Note over Plugin,Server: /api/rico
+    Plugin ->> Server: Request for RICO dataset
+    activate Server
+    Server -->> Server: Check if RICO dataset exists
+    alt RICO dataset does not exist
+        Server -->> Plugin: Return error and download link
+    else RICO dataset exists
+        Server ->> Server: Select and save JSON files from dataset
+        Server -->> Plugin: Return success message
+    end
+    deactivate Server
+
+    Note over Plugin,Server: /api/generateMappingTable
+    Plugin ->> Server: Request for mapping table
+    activate Server
+    Server ->> Server: Load saved JSON files
+    loop for each JSON files
+        Server ->> GPT: Send componentLabel, ancestors, and design system info
+        activate GPT
+        GPT -->> Server: Return similar design system name and key
+        deactivate GPT
+        Server ->> Server: Update JSON file
+    end
+    Server -->> Plugin: Return response message
+    deactivate Server
+```
