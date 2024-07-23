@@ -1,80 +1,89 @@
 import * as React from 'react';
+import { CssVarsProvider } from '@mui/joy/styles';
+import Sheet from '@mui/joy/Sheet';
+import Typography from '@mui/joy/Typography';
+import FormControl from '@mui/joy/FormControl';
+import FormLabel from '@mui/joy/FormLabel';
+import Input from '@mui/joy/Input';
+import Button from '@mui/joy/Button';
+import Stack from '@mui/joy/Stack';
 
 const App = () => {
   const [data, setData] = React.useState(null);
+  const [url, setUrl] = React.useState('');
+  const [taskDesc, setTaskDesc] = React.useState('');
+  const [personaDesc, setPersonaDesc] = React.useState('');
 
-  const getData = () => {
-    setData(null);
-    parent.postMessage({ pluginMessage: { type: 'get-data' } }, '*');
+  const handleInit = () => {
+    parent.postMessage({ pluginMessage: { type: 'init', url } }, '*');
   };
 
-  const postData = () => {
-    setData(null);
-    parent.postMessage({ pluginMessage: { type: 'post-data' } }, '*');
+  const handleExplore = () => {
+    parent.postMessage({ pluginMessage: { type: 'explore', taskDesc, personaDesc } }, '*');
   };
 
-  const requestRico = () => {
-    setData(null);
-    parent.postMessage({ pluginMessage: { type: 'request-rico' } }, '*');
+  const handleStop = () => {
+    parent.postMessage({ pluginMessage: { type: 'stop-exploration' } }, '*');
   };
 
-  const generateMappingTable = () => {
-    setData(null);
-    parent.postMessage({ pluginMessage: { type: 'generate-mapping-table' } }, '*');
+  const handleStatus = () => {
+    parent.postMessage({ pluginMessage: { type: 'exploration-status' } }, '*');
   };
-
-  const requestFigmaFile = () => {
-    setData(null);
-    parent.postMessage({ pluginMessage: { type: 'request-figma-file' } }, '*');
-  };
-
 
   React.useEffect(() => {
-    function handleMessage(event) {
-      if (event.data.pluginMessage.type === 'response-data') {
-        setData(event.data.pluginMessage.data);
+    window.onmessage = (event) => {
+      const { type, data } = event.data.pluginMessage;
+      if (type === 'response') {
+        setData(data);
       }
-      if (event.data.pluginMessage.type === 'response-post') {
-        setData(event.data.pluginMessage.data);
-      }
-      if (event.data.pluginMessage.type === 'response-rico') {
-        setData(event.data.pluginMessage.data);
-      }
-      if (event.data.pluginMessage.type === 'response-mapping') {
-        setData(event.data.pluginMessage.data);
-      }
-      if (event.data.pluginMessage.type === 'response-figma-file') {
-        setData(event.data.pluginMessage.data);
-      }
-    }
-
-    window.addEventListener('message', handleMessage);
-
-    // Clean up event listener on unmount
-    return () => {
-      window.removeEventListener('message', handleMessage);
     };
   }, []);
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={getData}>Test if API is working (GET)</button>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={postData}>Extract design library information (POST)</button>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={requestRico}>Extract annotation information from RICO (POST)</button>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={generateMappingTable}>Generate mapping table (POST)</button>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={requestFigmaFile}>Request Figma File</button>
-      </div>
-      {data && <div>Data: {JSON.stringify(data)}</div>}
-    </div>
+    <CssVarsProvider>
+      <Sheet sx={{ maxWidth: 400, mx: 'auto', my: 4, py: 3, px: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Typography level="h4" component="h1">
+          Figma Explorer
+        </Typography>
+        <FormControl>
+          <FormLabel>Figma URL</FormLabel>
+          <Input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Enter Figma URL"
+          />
+        </FormControl>
+        <Button onClick={handleInit}>Initialize</Button>
+        <FormControl>
+          <FormLabel>Task Description</FormLabel>
+          <Input
+            value={taskDesc}
+            onChange={(e) => setTaskDesc(e.target.value)}
+            placeholder="Enter task description"
+          />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Persona Description</FormLabel>
+          <Input
+            value={personaDesc}
+            onChange={(e) => setPersonaDesc(e.target.value)}
+            placeholder="Enter persona description"
+          />
+        </FormControl>
+        <Stack direction="row" spacing={1}>
+          <Button onClick={handleExplore}>Start Exploration</Button>
+          <Button onClick={handleStop} color="danger">Stop Exploration</Button>
+          <Button onClick={handleStatus} variant="outlined">Check Status</Button>
+        </Stack>
+        {data && (
+          <Sheet variant="outlined" sx={{ mt: 2, p: 2 }}>
+            <Typography component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
+              {JSON.stringify(data, null, 2)}
+            </Typography>
+          </Sheet>
+        )}
+      </Sheet>
+    </CssVarsProvider>
   );
 };
 
