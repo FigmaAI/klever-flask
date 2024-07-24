@@ -8,8 +8,10 @@ import Input from '@mui/joy/Input';
 import Button from '@mui/joy/Button';
 import Stack from '@mui/joy/Stack';
 
+import { ServerResponse } from '../../typings/types';
+
 const App = () => {
-  const [data, setData] = React.useState(null);
+  const [data, setData] = React.useState<ServerResponse | null>(null);
   const [url, setUrl] = React.useState('');
   const [taskDesc, setTaskDesc] = React.useState('');
   const [personaDesc, setPersonaDesc] = React.useState('');

@@ -1,6 +1,8 @@
+import { PluginMessage } from '../typings/types';
+
 figma.showUI(__html__, { width: 400, height: 500 });
 
-figma.ui.onmessage = async (msg) => {
+figma.ui.onmessage = async (msg: PluginMessage) => {
   if (msg.type === 'init') {
     const response = await fetch('http://localhost:5000/init', {
       method: 'POST',
@@ -10,6 +12,7 @@ figma.ui.onmessage = async (msg) => {
     const data = await response.json();
     figma.ui.postMessage({ type: 'response', data });
   } else if (msg.type === 'explore') {
+    console.log('Sending explore request with:', msg.taskDesc, msg.personaDesc);
     const response = await fetch('http://localhost:5000/explore', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
