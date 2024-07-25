@@ -7,3 +7,4 @@ yarn-error.log
 key.json
 __pycache__
 src/server/rico_dataset_v0.1-semantic_annotations.zip
+/.yarn
