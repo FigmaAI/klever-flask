@@ -1,3 +1,5 @@
+import { ParsedReport, ParsedRound } from '../typings/types';
+
 export function createText(characters: string, fontSize: number, fontStyle: 'Regular' | 'Bold'): TextNode {
   const text = figma.createText();
   text.characters = characters;
@@ -7,26 +9,29 @@ export function createText(characters: string, fontSize: number, fontStyle: 'Reg
   return text;
 }
 
-export function createTextFrame(title: string, content: string): FrameNode {
+export function createTextFrame(title: string, content: string, r?: number, g?: number, b?: number): FrameNode {
   const frame = figma.createFrame();
   frame.name = title;
 
   const titleText = createText(title, 32, 'Bold');
+  if (r !== undefined && g !== undefined && b !== undefined) {
+    titleText.fills = [{ type: 'SOLID', color: { r, g, b } }];
+  }
 
-  // decode 'content' e.g. "To complete the task of booking a ride, I need to tap the \"Book JustGrab\" button." -> "To complete the task of booking a ride, I need to tap the "Book JustGrab" button."
   const decodedContent = content.replace(/\\(.)/g, '$1');
   const contentText = createText(decodedContent, 24, 'Regular');
+  if (r !== undefined && g !== undefined && b !== undefined) {
+    contentText.fills = [{ type: 'SOLID', color: { r, g, b } }];
+  }
 
   frame.appendChild(titleText);
   frame.appendChild(contentText);
 
-  // set auto-layouy and maxWidth 1000px
   frame.layoutMode = 'VERTICAL';
   frame.itemSpacing = 16;
   frame.counterAxisSizingMode = 'FIXED';
   frame.resize(1000, frame.height);
   frame.primaryAxisSizingMode = 'AUTO';
-  // Set background color to transparent
   frame.fills = [];
 
   titleText.layoutSizingHorizontal = 'FILL';
@@ -105,7 +110,7 @@ export function createTaskDescFrame(taskDesc: string, personaDesc?: string) {
   frame.appendChild(descText);
 
   if (personaDesc) {
-    const personaText = createText(`As a person who is ${personaDesc}`, 24, 'Regular');
+    const personaText = createText(personaDesc, 24, 'Regular');
     frame.appendChild(personaText);
   }
 
@@ -133,9 +138,11 @@ export function createPreviewFrame(): FrameNode {
   frame.layoutMode = 'HORIZONTAL';
   frame.paddingTop = frame.paddingBottom = frame.paddingLeft = frame.paddingRight = 64;
   frame.itemSpacing = 64;
-  frame.fills = [{ type: 'SOLID', color: { r: 0.8667, g: 0.8667, b: 0.8667 } }]; // 배경색 #ddd 설정
+  frame.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }]; // set the black background
   frame.primaryAxisSizingMode = 'AUTO';
   frame.counterAxisSizingMode = 'AUTO';
+  frame.cornerRadius = 16;
+
   return frame;
 }
 
@@ -162,3 +169,98 @@ export function createImageFrameFromHash(
 
   return imageFrame;
 }
+
+export function parseReportContent(content: string): ParsedReport {
+  const titleMatch = content.match(/# (.+)$/m);
+  const taskNameMatch = content.match(/^(self_explore.+)$/m);
+  const taskDescMatch = content.match(/## Task Description\s+([\s\S]*?)(?=##|$)/);
+  const personaDescMatch = content.match(/## Persona Description\s+([\s\S]*?)(?=##|$)/);
+  const rounds = content.split(/^## Round \d+$/m).slice(1);
+
+
+  return {
+    title: titleMatch? titleMatch[1].trim() : '',
+    taskName: taskNameMatch? taskNameMatch[1].trim() : '',
+    taskDesc: taskDescMatch ? taskDescMatch[1].trim() : '',
+    personaDesc: personaDescMatch ? personaDescMatch[1].trim() : '',
+    rounds: rounds.map(round => parseRound(round))
+  };
+}
+
+export async function parseRound(roundContent: string): Promise<ParsedRound> {
+  const imageRegex = /!\[.*?\]\((.*?)\)/g;
+  const observationMatch = roundContent.match(/### Observation:\s+([\s\S]*?)(?=###|$)/);
+  const thoughtMatches = roundContent.match(/### Thought:\s+([\s\S]*?)(?=###|$)/g);
+  const actionMatch = roundContent.match(/### Action:\s+([\s\S]*?)(?=###|$)/);
+  const summaryMatch = roundContent.match(/### Summary:\s+([\s\S]*?)(?=###|$)/);
+  const decisionMatch = roundContent.match(/### Decision:\s+([\s\S]*?)(?=###|$)/);
+
+  const imagePaths = [...roundContent.matchAll(imageRegex)].map(match => match[1]);
+  const images = await Promise.all(imagePaths.map(async imagePath => {
+    const response = await fetch('http://localhost:5000/get_image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_path: imagePath })
+    });
+    const data = await response.json();
+    return data.status === 'success' ? data.image_data : null;
+  }));
+
+  return {
+    images: images.filter(img => img !== null),
+    observation: observationMatch ? observationMatch[1].trim() : '',
+    thoughts: thoughtMatches ? thoughtMatches.map(thought => thought.replace(/### Thought:\s+/, '').trim()) : [],
+    action: actionMatch ? actionMatch[1].trim() : '',
+    summary: summaryMatch ? summaryMatch[1].trim() : '',
+    decision: decisionMatch ? decisionMatch[1].trim() : ''
+  };
+}
+
+
+export async function createRoundElement(round: Awaited<ReturnType<typeof parseRound>>, roundCount: number) {
+  const anatomyFrame = createAnatomyFrame(roundCount);
+  const previewFrame = createPreviewFrame();
+  anatomyFrame.appendChild(previewFrame);
+
+  for (const base64Image of round.images) {
+    const imageFrame = await createImageFrameFromBase64(base64Image);
+    previewFrame.appendChild(imageFrame);
+  }
+
+  addTextFramesToPreview(previewFrame, round);
+
+  return anatomyFrame;
+}
+
+async function createImageFrameFromBase64(base64Image: string) {
+  const imageBuffer = figma.base64Decode(base64Image);
+  const image = figma.createImage(imageBuffer);
+  const { width, height } = await image.getSizeAsync();
+  return createImageFrameFromHash(image.hash, width, height);
+}
+
+function addTextFramesToPreview(previewFrame: FrameNode, round: Awaited<ReturnType<typeof parseRound>>) {
+  const responseFrame = figma.createFrame();
+  // set background color to transparent
+  responseFrame.fills = [];
+  responseFrame.name = 'Klever UT Response';
+  responseFrame.layoutMode = 'VERTICAL';
+  responseFrame.itemSpacing = 16;
+  responseFrame.primaryAxisSizingMode = 'AUTO';
+  responseFrame.counterAxisSizingMode = 'AUTO';
+  
+  responseFrame.appendChild(createTextFrame('Observation', round.observation, 1, 1, 1));
+  if (round.thoughts.length > 0) {
+    responseFrame.appendChild(createTextFrame('Thought', round.thoughts[0], 1, 1, 1));
+  }
+  responseFrame.appendChild(createTextFrame('Action', round.action, 1, 1, 1));
+  responseFrame.appendChild(createTextFrame('Summary', round.summary, 1, 1, 1));
+  responseFrame.appendChild(createTextFrame('Decision', round.decision, 1, 1, 1));
+  if (round.thoughts.length > 1) {
+    responseFrame.appendChild(createTextFrame('Thought', round.thoughts[1], 1, 1, 1));
+  }
+
+  previewFrame.appendChild(responseFrame);
+}
+
+

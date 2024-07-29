@@ -28,4 +28,19 @@ export type PluginMessage =
   | { type: 'stop-exploration' }
   | { type: 'exploration-status' };
 
+export interface ParsedReport {
+  title: string;
+  taskName: string;
+  taskDesc: string;
+  personaDesc: string;
+  rounds: Promise<ParsedRound>[];
+}
   
+export interface ParsedRound {
+  images: string[];
+  observation: string;
+  thoughts: string[];
+  action: string;
+  summary: string;
+  decision: string;
+}

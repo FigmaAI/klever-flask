@@ -5,5 +5,10 @@
   "main": "dist/code.js",
   "ui": "dist/ui.html",
   "permissions": ["teamlibrary"],
-  "editorType": ["figma", "dev"]
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["https://figma.com", "http://localhost:5000"],
+    "reasoning": "To get images from server",
+    "devAllowedDomains": ["http://localhost:5000"]
+  }
 }
