@@ -29,7 +29,7 @@ function startPollReport() {
       } catch (error) {
         console.error('Error polling report:', error);
       }
-    }, 30000);
+    }, 10000);
   }
 }
 
@@ -72,7 +72,7 @@ async function handleReportUpdate(content: string) {
   figma.viewport.scrollAndZoomIntoView([taskFrame]);
 }
 
-figma.showUI(__html__, { width: 400, height: 500 });
+figma.showUI(__html__, { width: 400, height: 800 });
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
   if (msg.type === 'init') {
@@ -96,7 +96,7 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
     // start polling for report after sending explore request to server
     setTimeout(() => {
       startPollReport();
-    }, 5000);
+    }, 1000);
   } else if (msg.type === 'stop-exploration') {
     const response = await fetch('http://localhost:5000/stop_exploration', { method: 'POST' });
     const data = await response.json();
