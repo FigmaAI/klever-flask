@@ -1,99 +1,142 @@
-# Figma Plugin with Flask Backend
+# Figma Explorer Plugin
 
-This plugin demonstrates how to use a Flask-based backend with Figma.
+This Figma plugin allows users to explore and analyze Figma designs using AI-powered insights.
+
+## Features
+
+- Initialize plugin with a Figma URL
+- Start and stop design exploration
+- Define custom tasks and personas for exploration
+- Real-time status updates
+- Automatic report generation and visualization in Figma
 
 ## Quick Start
 
-### 1. Client-side Setup
-
-The client-side is implemented via a Figma plugin.
-
-1. Run `yarn` to install the project's dependencies.
-2. In Figma, select `Plugins` -> `Development` -> `Import plugin from manifest...` and choose the `manifest.json` file in this repository.
-
-To modify the plugin's UI, edit the [App.tsx](./src/app/components/App.tsx) file, and to interact with the Figma API, edit the [controller.ts](./src/plugin/controller.ts) file. For more information, refer to the [Figma API Overview](https://www.figma.com/plugin-docs/api/api-overview/).
-
-### 2. Backend Setup
-
-First, install the required packages. This project works with Python 3.6 or higher, and it's recommended to run it in a virtual environment.
-
+1. Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+yarn
 ```
 
-### 3. Write and Run the Flask Server
+2. In Figma, go to `Plugins` -> `Development` -> `Import plugin from manifest...` and select the `manifest.json` file from this repository.
 
-Before running the backend server, you need to navigate to the `src/server`directory.
-```bash
-cd src/server
-```
-
-Then, write and run the Flask web server in the `app.py` file. This repository provides an example `app.py` file, which includes code to set up the Flask application and define several endpoints.
-
-To run the server, use the following command:
-
-
-```bash
-python app.py
-```
+3. Run the plugin in Figma to start exploring your designs.
 
 ## How It Works
 
-The Figma plugin and Flask server exchange information as follows:
+1. **Initialization**: Enter a Figma URL to connect the plugin to your design file.
+
+2. **Exploration**: Provide a task description and persona description to start the AI-powered exploration.
+
+3. **Real-time Updates**: The plugin polls the server for updates every 10 seconds, visualizing the exploration progress directly in your Figma file.
+
+4. **Report Generation**: As the exploration progresses, the plugin creates and updates frames in Figma to display the findings.
 
 
+## System Architecture
 
-![uml](./uml.png)
-```
-sequenceDiagram
-    participant Plugin as Figma Plugin
-    participant Server as Flask Server
-    participant Figma as Figma Plugin API
-    participant GPT as OpenAI
+Below is a UML sequence diagram illustrating the interaction between the Figma Plugin, Flask Server, Figma Plugin API, and OpenAI:
 
-    Note over Plugin,Server: /api/get
-    Plugin ->> Server: GET request
-    activate Server
-    Server -->> Plugin: Return static message
-    deactivate Server
+![System Architecture UML](uml.png)
+<!-- 
+<pre>
+@startuml
+participant User
+participant "self_explorer_figma.py" as Main
+participant "Chrome API" as SeleniumController
+participant "Figma Rest API" as FigmaAPI
+participant "File Cache" as FileCache
+participant "Language Model" as LanguageModel
 
-    Note over Plugin,Server: /api/post
-    Plugin ->> Figma: Request design system info
-    activate Figma
-    Figma -->> Plugin: Return design system info
-    deactivate Figma
-    Plugin ->> Server: POST design system info
-    activate Server
-    Server ->> Server: save/update data
-    Server -->> Plugin: Return response message
-    deactivate Server
+User -> Main: Run script with --url, --task_desc, --persona_desc
+activate Main
 
+Main -> FigmaAPI: Get Figma file data
+activate FigmaAPI
+FigmaAPI -> Main: File data
+deactivate FigmaAPI
 
+Main -> FileCache: Save file data as JSON
+activate FileCache
+FileCache -> Main: File data saved
+deactivate FileCache
 
-    Note over Plugin,Server: /api/rico
-    Plugin ->> Server: Request for RICO dataset
-    activate Server
-    Server -->> Server: Check if RICO dataset exists
-    alt RICO dataset does not exist
-        Server -->> Plugin: Return error and download link
-    else RICO dataset exists
-        Server ->> Server: Select and save JSON files from dataset
-        Server -->> Plugin: Return success message
-    end
-    deactivate Server
+Main -> SeleniumController: Create SeleniumController object
+activate SeleniumController
+SeleniumController -> Main: SeleniumController instance
+deactivate SeleniumController
 
-    Note over Plugin,Server: /api/generateMappingTable
-    Plugin ->> Server: Request for mapping table
-    activate Server
-    Server ->> Server: Load saved JSON files
-    loop for each JSON files
-        Server ->> GPT: Send componentLabel, ancestors, and design system info
-        activate GPT
-        GPT -->> Server: Return similar design system name and key
-        deactivate GPT
-        Server ->> Server: Update JSON file
-    end
-    Server -->> Plugin: Return response message
-    deactivate Server
-```
+Main -> SeleniumController: Open Chrome and navigate to URL
+activate SeleniumController
+SeleniumController -> Main: Browser opened and navigated
+deactivate SeleniumController
+
+Main -> Main: Print task description
+
+Main -> Main: Print persona description (if provided)
+
+loop until task_complete or max_rounds reached
+  Main -> SeleniumController: Take screenshot before action
+  activate SeleniumController
+
+  SeleniumController -> Main: Screenshot before action
+  deactivate SeleniumController
+
+  Main -> FileCache: Get current node data from saved JSON
+  activate FileCache
+  FileCache -> Main: Node data
+  deactivate FileCache
+
+  Main -> Main: Create list of UI elements
+
+  Main -> Main: Draw bounding boxes on screenshot
+
+  Main -> LanguageModel: Get model response for exploration
+  activate LanguageModel
+  LanguageModel -> Main: Model response
+  deactivate LanguageModel
+
+  Main -> Main: Parse exploration response
+
+  alt act_name in ["tap", "long_press", "swipe"]
+    Main -> SeleniumController: Perform action (tap, long_press, or swipe)
+    activate SeleniumController
+    SeleniumController -> Main: Action performed
+    deactivate SeleniumController
+  else
+    Main -> Main: Break loop
+  end
+
+  Main -> SeleniumController: Take screenshot after action
+  activate SeleniumController
+  SeleniumController -> Main: Screenshot after action
+  deactivate SeleniumController
+
+  Main -> LanguageModel: Get model response for reflection
+  activate LanguageModel
+  LanguageModel -> Main: Model response
+  deactivate LanguageModel
+
+  Main -> Main: Parse reflection response
+
+  alt decision in ["BACK", "CONTINUE", "SUCCESS"]
+    Main -> Main: Generate and save documentation
+  else
+    Main -> Main: Handle error or ineffective action
+  end
+end
+
+Main -> User: Print exploration result and generated docs count
+@enduml
+</pre>
+-->
+
+## Plugin Structure
+
+- `src/plugin/controller.ts`: Handles communication between Figma and the server, manages report polling, and creates Figma elements.
+- `src/app/components/App.tsx`: Defines the plugin's user interface using React and Material-UI components.
+
+## Note
+
+This plugin requires a separate server component to function. Ensure the server is running and accessible at `http://localhost:5000` before using the plugin.
+
