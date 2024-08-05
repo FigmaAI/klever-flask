@@ -12,11 +12,7 @@ This Figma plugin allows users to explore and analyze Figma designs using AI-pow
 
 ## Quick Start
 
-1. Install dependencies:
-
-```bash
-yarn
-```
+1. Install dependencies: `yarn`
 
 2. In Figma, go to `Plugins` -> `Development` -> `Import plugin from manifest...` and select the `manifest.json` file from this repository.
 
