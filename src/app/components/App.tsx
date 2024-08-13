@@ -94,10 +94,6 @@ const App = () => {
     }
   };
 
-  const handleStepClick = (step) => {
-    setActiveStep(step);
-  };
-
   React.useEffect(() => {
     window.onmessage = (event) => {
       const { type, data } = event.data.pluginMessage;
@@ -131,7 +127,6 @@ const App = () => {
           <Step
             active={activeStep === 0}
             completed={activeStep > 0}
-            onClick={() => handleStepClick(0)}
             indicator={
               <StepIndicator variant={activeStep === 0 ? 'solid' : 'soft'} color="primary">
                 {activeStep > 0 ? <CheckRounded /> : <AddLinkOutlined />}
@@ -199,7 +194,6 @@ const App = () => {
           <Step
             active={activeStep === 1}
             completed={activeStep > 1}
-            onClick={() => handleStepClick(1)}
             indicator={
               <StepIndicator variant={activeStep === 1 ? 'solid' : 'soft'} color="primary">
                 {activeStep > 1 ? <CheckRounded /> : <DesignServicesOutlined />}
@@ -290,7 +284,6 @@ const App = () => {
           <Step
             active={activeStep === 2}
             completed={activeStep > 2}
-            onClick={() => handleStepClick(2)}
             indicator={
               <StepIndicator variant={activeStep === 2 ? 'solid' : 'soft'} color="primary">
                 {activeStep > 2 ? <CheckRounded /> : <PhotoFilterOutlined />}
