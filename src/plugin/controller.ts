@@ -68,32 +68,42 @@ async function handleReportUpdate(content: string) {
     const roundElement = await createRoundElement(roundData, i + 1);
     taskFrame.appendChild(roundElement);
   }
-  
+
   figma.viewport.scrollAndZoomIntoView([taskFrame]);
 }
 
-figma.showUI(__html__, { width: 400, height: 800 });
+figma.showUI(__html__, { width: 600, height: 600 });
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
   if (msg.type === 'init') {
+    const requestBody: any = { url: msg.url, app: figma.root.name };
+    if (msg.password) {
+      requestBody.password = msg.password;
+    }
     const response = await fetch('http://localhost:5000/init', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: msg.url, app: figma.root.name }),
+      body: JSON.stringify(requestBody),
     });
     const data = await response.json();
     figma.ui.postMessage({ type: 'response', data });
   } else if (msg.type === 'explore') {
-    console.log('Sending explore request with:', msg.taskDesc, msg.personaDesc);
+    const { taskDesc, personaDesc } = msg;
+    const requestBody: any = { task_desc: taskDesc };
+    if (personaDesc !== '') {
+      requestBody.persona_desc = personaDesc;
+    }
+
     const response = await fetch('http://localhost:5000/explore', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task_desc: msg.taskDesc, persona_desc: msg.personaDesc }),
+      body: JSON.stringify(requestBody),
     });
+
     const data = await response.json();
     figma.ui.postMessage({ type: 'response', data });
 
-    // start polling for report after sending explore request to server
+    // Start polling for report after sending explore request to server
     setTimeout(() => {
       startPollReport();
     }, 1000);

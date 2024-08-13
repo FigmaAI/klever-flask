@@ -14,6 +14,7 @@ export interface ExploreMessage {
 export interface InitMessage {
   type: 'init';
   url: string;
+  password?: string;
 }
 
 export interface ReportUpdateMessage {

@@ -7,7 +7,7 @@
   "permissions": ["teamlibrary"],
   "editorType": ["figma"],
   "networkAccess": {
-    "allowedDomains": ["https://figma.com", "http://localhost:5000"],
+    "allowedDomains": ["https://figma.com"],
     "reasoning": "To get images from server",
     "devAllowedDomains": ["http://localhost:5000"]
   }
